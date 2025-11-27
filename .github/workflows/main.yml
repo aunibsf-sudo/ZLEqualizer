@@ -1,0 +1,29 @@
+name: Build ZL Equalizer (Windows)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          git clone https://github.com/steinbergmedia/vst3sdk.git ..
+          mkdir build
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -A x64 -DVST3_SDK_PATH="../vst3sdk"
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Upload VST
+        uses: actions/upload-artifact@v3
+        with:
+          name: ZLEqualizer-Windows
+          path: build/**/*.vst3
