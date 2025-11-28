@@ -11,9 +11,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: false
 
-      - name: Clone JUCE
+      - name: Remove bundled JUCE folder
+        run: |
+          if (Test-Path "JUCE") { Remove-Item -Recurse -Force "JUCE" }
+
+      - name: Clone JUCE (full)
         run: |
           git clone --depth 1 https://github.com/juce-framework/JUCE.git JUCE
 
