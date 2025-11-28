@@ -13,6 +13,7 @@ jobs:
         with:
           submodules: false
 
+      # --- FIX JUCE ---
       - name: Remove bundled JUCE folder
         run: |
           if (Test-Path "JUCE") { Remove-Item -Recurse -Force "JUCE" }
@@ -21,10 +22,22 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/juce-framework/JUCE.git JUCE
 
+      # --- FIX NLOPT ---
+      - name: Clone nlopt
+        run: |
+          git clone --depth 1 https://github.com/stevengj/nlopt.git nlopt
+
+      # --- FIX KFR DSP ---
+      - name: Clone kfr
+        run: |
+          git clone --depth 1 https://github.com/kfrlib/kfr.git kfr
+
+      # --- VST3 SDK ---
       - name: Clone VST3 SDK
         run: |
           git clone --depth 1 https://github.com/steinbergmedia/vst3sdk.git ../vst3sdk
 
+      # --- CMake ---
       - name: Configure CMake
         run: |
           cmake -S . -B build -A x64 -DVST3_SDK_PATH="../vst3sdk" -DBUILD_INSTALLER=OFF
