@@ -6,24 +6,26 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install dependencies
+      - name: Download VST3 SDK
         run: |
-          git clone https://github.com/steinbergmedia/vst3sdk.git ..
-          mkdir build
+          git clone https://github.com/steinbergmedia/vst3sdk.git ../vst3sdk
 
-      - name: Configure
+      - name: Configure CMake (disable installer)
         run: |
-          cmake -S . -B build -A x64 -DVST3_SDK_PATH="../vst3sdk"
+          cmake -S . -B build -A x64 -DVST3_SDK_PATH="../vst3sdk" -DBUILD_INSTALLER=OFF
 
       - name: Build
         run: cmake --build build --config Release
 
-      - name: Upload VST
+      - name: Upload VST3
         uses: actions/upload-artifact@v3
         with:
-          name: ZLEqualizer-Windows
-          path: build/**/*.vst3
+          name: ZLEqualizer-VST3
+          path: |
+            build/**/*.vst3
+            build/**/*.dll
