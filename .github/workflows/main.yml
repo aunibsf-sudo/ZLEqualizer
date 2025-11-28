@@ -10,12 +10,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      - name: Download VST3 SDK
+      - name: Clone JUCE
         run: |
-          git clone https://github.com/steinbergmedia/vst3sdk.git ../vst3sdk
+          git clone --depth 1 https://github.com/juce-framework/JUCE.git JUCE
 
-      - name: Configure CMake (disable installer)
+      - name: Clone VST3 SDK
+        run: |
+          git clone --depth 1 https://github.com/steinbergmedia/vst3sdk.git ../vst3sdk
+
+      - name: Configure CMake
         run: |
           cmake -S . -B build -A x64 -DVST3_SDK_PATH="../vst3sdk" -DBUILD_INSTALLER=OFF
 
@@ -26,6 +32,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ZLEqualizer-VST3
-          path: |
-            build/**/*.vst3
-            build/**/*.dll
+          path: build/**/*.vst3
