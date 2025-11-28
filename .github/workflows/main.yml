@@ -1,8 +1,36 @@
-- name: Configure CMake
-  run: cmake -S . -B build -A x64 -DVST3_SDK_PATH="../vst3sdk" -DBUILD_INSTALLER=OFF -DNLopt_BUILD_JAVA=OFF -DBUILD_TESTING=OFF -DKFR_ENABLE_MULTIARCH=ON -DKFR_ARCHS="sse2;avx;avx2" -DZL_JUCE_FORMATS="VST3" -DZL_JUCE_COPY_PLUGIN=FALSE
+name: Build VST3 Only
 
-    - name: Upload VST3 artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ZLEqualizer-vst3
-        path: build/ZLEqualizer_artefacts/Release/VST3/*.vst3
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows-vst3:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          git submodule update --init --recursive
+          git clone --depth 1 https://github.com/juce-framework/JUCE.git JUCE
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -A x64 `
+            -DZL_JUCE_FORMATS="VST3" `
+            -DBUILD_INSTALLER=OFF `
+            -DZL_BUILD_LINUX=OFF `
+            -DZL_BUILD_MAC=OFF `
+            -DZL_BUILD_WINDOWS=ON `
+            -DNLopt_BUILD_JAVA=OFF `
+            -DBUILD_TESTING=OFF
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Upload VST3
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZL_Equalizer_VST3
+          path: build/Release/*.vst3
