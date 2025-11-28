@@ -56,7 +56,7 @@ else ()
     if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
         set(FORMATS VST3 AU Standalone)
     else ()
-        set(FORMATS VST3 LV2 Standalone)
+        set(ZL_JUCE_FORMATS "VST3")
     endif ()
 endif ()
 
