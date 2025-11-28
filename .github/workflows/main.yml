@@ -1,23 +1,36 @@
-name: Build Windows VST3
+name: Build VST3 Only
 
 on:
-  workflow_dispatch:
   push:
-    branches: [ main ]
+  pull_request:
 
 jobs:
   build-windows:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
+      # 1. Checkout sans réactiver les submodules automatiquement
+      - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: false
 
+      # 2. Supprimer les anciens dossiers JUCE, kfr, nlopt
+      - name: Clean existing submodules
+        run: |
+          if (Test-Path JUCE) { Remove-Item JUCE -Recurse -Force }
+          if (Test-Path kfr) { Remove-Item kfr -Recurse -Force }
+          if (Test-Path nlopt) { Remove-Item nlopt -Recurse -Force }
+
+      # 3. Initialiser les submodules proprement
+      - name: Init submodules
+        run: git submodule update --init --recursive
+
+      # 4. Installer CMake (méthode stable)
       - name: Install CMake
-        uses: lukka/get-cmake@v3
+        uses: jwlawson/actions-setup-cmake@v2
 
+      # 5. Configurer le projet en ne construisant QUE le VST3
       - name: Configure CMake
         run: |
           cmake -S . -B build -A x64 `
@@ -29,18 +42,24 @@ jobs:
             -DKFR_ENABLE_MULTIARCH=ON `
             -DKFR_ARCHS="sse2;avx;avx2"
 
+      # 6. Compiler
       - name: Build
-        run: cmake --build build --config Release --target ZLEqualizer_VST3
+        run: cmake --build build --config Release
 
-      - name: Locate VST3 file
-        id: findvst3
+      # 7. Chercher le fichier VST3 généré
+      - name: Locate VST3 path
+        id: find_vst3
+        shell: pwsh
         run: |
-          $file = Get-ChildItem -Recurse -Filter *.vst3 | Select-Object -First 1
-          if (!$file) { throw "Aucun fichier .vst3 trouvé !" }
-          echo "vst3path=$($file.FullName)" >> $env:GITHUB_OUTPUT
+          $vst3 = Get-ChildItem -Recurse -Filter *.vst3 | Select-Object -First 1
+          if ($vst3 -eq $null) {
+            Write-Error "No VST3 built!"
+          }
+          echo "vst3path=$($vst3.FullName)" >> $env:GITHUB_OUTPUT
 
-      - name: Upload VST3 artifact
+      # 8. Upload du VST3 (seulement ça !)
+      - name: Upload VST3 artefact
         uses: actions/upload-artifact@v4
         with:
-          name: ZLEqualizer-Windows-VST3
-          path: ${{ steps.findvst3.outputs.vst3path }}
+          name: ZLEqualizer-VST3
+          path: ${{ steps.find_vst3.outputs.vst3path }}
