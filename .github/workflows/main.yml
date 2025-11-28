@@ -1,2 +1,8 @@
 - name: Configure CMake
   run: cmake -S . -B build -A x64 -DVST3_SDK_PATH="../vst3sdk" -DBUILD_INSTALLER=OFF -DNLopt_BUILD_JAVA=OFF -DBUILD_TESTING=OFF -DKFR_ENABLE_MULTIARCH=ON -DKFR_ARCHS="sse2;avx;avx2" -DZL_JUCE_FORMATS="VST3" -DZL_JUCE_COPY_PLUGIN=FALSE
+
+    - name: Upload VST3 artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ZLEqualizer-vst3
+        path: build/ZLEqualizer_artefacts/Release/VST3/*.vst3
