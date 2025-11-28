@@ -1,36 +1,46 @@
-name: Build VST3 Only
+name: Build Windows VST3
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
-  build-windows-vst3:
+  build-windows:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      - name: Install dependencies
-        run: |
-          git submodule update --init --recursive
-          git clone --depth 1 https://github.com/juce-framework/JUCE.git JUCE
+      - name: Install CMake
+        uses: lukka/get-cmake@v3
 
       - name: Configure CMake
         run: |
           cmake -S . -B build -A x64 `
             -DZL_JUCE_FORMATS="VST3" `
+            -DZL_JUCE_COPY_PLUGIN=TRUE `
             -DBUILD_INSTALLER=OFF `
-            -DZL_BUILD_LINUX=OFF `
-            -DZL_BUILD_MAC=OFF `
-            -DZL_BUILD_WINDOWS=ON `
             -DNLopt_BUILD_JAVA=OFF `
-            -DBUILD_TESTING=OFF
+            -DBUILD_TESTING=OFF `
+            -DKFR_ENABLE_MULTIARCH=ON `
+            -DKFR_ARCHS="sse2;avx;avx2"
 
       - name: Build
-        run: cmake --build build --config Release
+        run: cmake --build build --config Release --target ZLEqualizer_VST3
 
-      - name: Upload VST3
+      - name: Locate VST3 file
+        id: findvst3
+        run: |
+          $file = Get-ChildItem -Recurse -Filter *.vst3 | Select-Object -First 1
+          if (!$file) { throw "Aucun fichier .vst3 trouvé !" }
+          echo "vst3path=$($file.FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Upload VST3 artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ZL_Equalizer_VST3
-          path: build/Release/*.vst3
+          name: ZLEqualizer-Windows-VST3
+          path: ${{ steps.findvst3.outputs.vst3path }}
