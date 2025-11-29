@@ -9,32 +9,34 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # 1. Checkout sans réactiver les submodules automatiquement
+      # 1. Checkout simple (pas de submodules auto)
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           submodules: false
 
-      # 2. Supprimer les anciens dossiers JUCE, kfr, nlopt
+      # 2. Supprimer anciens submodules s'ils existent
       - name: Clean existing submodules
+        shell: pwsh
         run: |
           if (Test-Path JUCE) { Remove-Item JUCE -Recurse -Force }
           if (Test-Path kfr) { Remove-Item kfr -Recurse -Force }
           if (Test-Path nlopt) { Remove-Item nlopt -Recurse -Force }
 
-      # 3. Initialiser les submodules proprement
+      # 3. Re-cloner proprement les submodules
       - name: Init submodules
         run: git submodule update --init --recursive
 
-      # 4. Installer CMake (méthode stable)
+      # 4. Installer CMake stable
       - name: Install CMake
         uses: jwlawson/actions-setup-cmake@v2
 
-      # 5. Configurer le projet en ne construisant QUE le VST3
+      # 5. Configuration CMake (retours à la ligne corrects)
       - name: Configure CMake
+        shell: pwsh
         run: |
           cmake -S . -B build -A x64 `
-            -DZL_JUCE_FORMATS="VST3" `
+            -DZL_JUCE_FORMATS=VST3 `
             -DZL_JUCE_COPY_PLUGIN=TRUE `
             -DBUILD_INSTALLER=OFF `
             -DNLopt_BUILD_JAVA=OFF `
@@ -46,19 +48,17 @@ jobs:
       - name: Build
         run: cmake --build build --config Release
 
-      # 7. Chercher le fichier VST3 généré
+      # 7. Trouver le VST3
       - name: Locate VST3 path
         id: find_vst3
         shell: pwsh
         run: |
           $vst3 = Get-ChildItem -Recurse -Filter *.vst3 | Select-Object -First 1
-          if ($vst3 -eq $null) {
-            Write-Error "No VST3 built!"
-          }
+          if ($vst3 -eq $null) { Write-Error "No VST3 built!" }
           echo "vst3path=$($vst3.FullName)" >> $env:GITHUB_OUTPUT
 
-      # 8. Upload du VST3 (seulement ça !)
-      - name: Upload VST3 artefact
+      # 8. Upload du VST3 uniquement
+      - name: Upload VST3 artifact
         uses: actions/upload-artifact@v4
         with:
           name: ZLEqualizer-VST3
