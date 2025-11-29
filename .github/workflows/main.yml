@@ -31,7 +31,7 @@ jobs:
       - name: Install CMake
         uses: jwlawson/actions-setup-cmake@v2
 
-      # 5. Configuration CMake (retours à la ligne corrects)
+      # 5. Configuration CMake
       - name: Configure CMake
         shell: pwsh
         run: |
@@ -48,13 +48,15 @@ jobs:
       - name: Build
         run: cmake --build build --config Release
 
-      # 7. Trouver le VST3
+      # 7. Trouver le fichier .vst3 compilé
       - name: Locate VST3 path
         id: find_vst3
         shell: pwsh
         run: |
           $vst3 = Get-ChildItem -Recurse -Filter *.vst3 | Select-Object -First 1
-          if ($vst3 -eq $null) { Write-Error "No VST3 built!" }
+          if ($vst3 -eq $null) { 
+            Write-Error "No VST3 built!" 
+          }
           echo "vst3path=$($vst3.FullName)" >> $env:GITHUB_OUTPUT
 
       # 8. Upload du VST3 uniquement
